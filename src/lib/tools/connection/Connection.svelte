@@ -1,4 +1,7 @@
 <script lang="ts">
+    import {ConnectionManager} from "./ConnectionManager";
+    import {getProfile} from "./bluetooth/Profile";
+
     const device: {device: BluetoothDevice | null } = $state({device: null});
     async function bluetoothChoose() {
         device.device = await navigator.bluetooth.requestDevice({
@@ -9,6 +12,9 @@
         if(str == null)
             str = "Name unavailable."
         return str;
+    }
+    async function onclick() {
+        ConnectionManager.CURRENT_CONNECTION = await getProfile(device.device as BluetoothDevice);
     }
 </script>
 <main id="connection">
@@ -23,7 +29,7 @@
             {#if device.device == null}
                 No device selected
             {:else}
-                {format(device.device.name)}
+                <button onclick={onclick}>Use {format(device.device.name)}</button>
             {/if}
         </div>
     </div>
