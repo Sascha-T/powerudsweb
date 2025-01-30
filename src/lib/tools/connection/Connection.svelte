@@ -5,7 +5,8 @@
     const device: {device: BluetoothDevice | null } = $state({device: null});
     async function bluetoothChoose() {
         device.device = await navigator.bluetooth.requestDevice({
-            acceptAllDevices: true
+            acceptAllDevices: true,
+            optionalServices: ["0000fff0-0000-1000-8000-00805f9b34fb"]
         });
     }
     function format(str: string | undefined) {

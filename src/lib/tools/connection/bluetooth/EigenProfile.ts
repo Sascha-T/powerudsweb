@@ -20,6 +20,7 @@ export class EigenProfile implements BluetoothProfile {
         this.readCharacteristic = await svc.getCharacteristic("0000fff1-0000-1000-8000-00805f9b34fb")
         this.writeCharacteristic = await svc.getCharacteristic("0000fff2-0000-1000-8000-00805f9b34fb")
 
+        await this.readCharacteristic.startNotifications();
         this.readCharacteristic.addEventListener("characteristicvaluechanged", this.notifications)
     }
     async putUDS(data: string): Promise<string> {
@@ -29,6 +30,7 @@ export class EigenProfile implements BluetoothProfile {
         let enc = new TextEncoder();
         let encoded = enc.encode(data);
         let array = new Uint8Array(encoded.length + 1)
+        array.set(encoded, 0);
         array[encoded.length] = 0x0d;
 
         let temp = new Uint8Array(0);
@@ -46,15 +48,25 @@ export class EigenProfile implements BluetoothProfile {
             let out = new Uint8Array(0);
 
             while(!done) {
+                console.log("New cycle")
                 if(prev != -1) {
                     clearTimeout(prev);
                 }
-                setTimeout(rej1, READ_TIMEOUT);
+                setTimeout(() => {
+                    console.log("Read timeout")
+                    rej1()
+                }, READ_TIMEOUT);
 
+                let thiz = this;
                 // await one instance of read
                 let ret: Uint8Array = await new Promise((acc, rej) => {
-                    this.promiseAcceptor = acc;
+                    console.log("The thing?")
+                    thiz.promiseAcceptor = acc;
+                    console.log(thiz);
                 })
+
+                console.log("Got: ")
+                console.log(ret)
 
                 let length = ret.length
                 // parse it yuh
@@ -89,14 +101,16 @@ export class EigenProfile implements BluetoothProfile {
 
         // data
         console.log("debug1: ")
-        console.log([...bytesRaw])
+        console.log(bytesRaw)
         let decoder = new TextDecoder();
         let string = decoder.decode(bytesRaw);
         console.log("debug: " + string)
         // to data
+        console.log("A: " + this.promiseAcceptor)
+        console.log(this)
 
         if(this.promiseAcceptor != null) {
-            this.promiseAcceptor(bytesRaw);
+            this.promiseAcceptor(new Uint8Array(bytesRaw.buffer));
         }
     }
 }
