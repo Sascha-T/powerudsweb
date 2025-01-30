@@ -8,10 +8,13 @@ export class EigenProfile implements BluetoothProfile {
     readCharacteristic?: BluetoothRemoteGATTCharacteristic
     writeCharacteristic?: BluetoothRemoteGATTCharacteristic
 
-    promiseAcceptor?: (value: Uint8Array) => void;
+    promiseAcceptor?: (val: unknown) => void;
+    message: string = "";
+    queuedMessages: string[] = [];
+    lastReceive: number = 0;
 
     async init(device: BluetoothDevice) {
-        if(device.gatt == null || !device.gatt.connected) {
+        if (device.gatt == null || !device.gatt.connected) {
             return
         }
         let gatt = device.gatt;
@@ -23,8 +26,9 @@ export class EigenProfile implements BluetoothProfile {
         await this.readCharacteristic.startNotifications();
         this.readCharacteristic.addEventListener("characteristicvaluechanged", this.notifications)
     }
+
     async putUDS(data: string): Promise<string> {
-        if(this.writeCharacteristic == null)
+        if (this.writeCharacteristic == null)
             throw "Why?";
 
         let enc = new TextEncoder();
@@ -41,76 +45,58 @@ export class EigenProfile implements BluetoothProfile {
             console.log("Wrote " + [...temp])
         } while (array.length != 0)
         console.log("Write success, awaiting read...");
-        let readData: Uint8Array = await new Promise(async (acc1, rej1) => {
+        let readData: string = await new Promise(async (acc1, rej1) => {
             let done = false;
             let prev = -1;
 
             let out = new Uint8Array(0);
 
-            while(!done) {
-                console.log("New cycle")
-                if(prev != -1) {
-                    clearTimeout(prev);
-                }
-                setTimeout(() => {
+            const timeoutFunc = () => {
+                let storedReceive = this.lastReceive;
+                return () => {
+                    if (this.lastReceive != storedReceive) {
+                        prev = setTimeout(timeoutFunc, READ_TIMEOUT);
+                        return;
+                    }
                     console.log("Read timeout")
                     rej1()
-                }, READ_TIMEOUT);
+                }
+            }
+            prev = setTimeout(timeoutFunc, READ_TIMEOUT);
 
-                let thiz = this;
-                // await one instance of read
-                let ret: Uint8Array = await new Promise((acc, rej) => {
-                    console.log("The thing?")
-                    thiz.promiseAcceptor = acc;
-                    console.log(thiz);
+            if (this.queuedMessages.length == 0)
+                await new Promise((acc, rej) => {
+                    this.promiseAcceptor = acc;
                 })
 
-                console.log("Got: ")
-                console.log(ret)
-
-                let length = ret.length
-                // parse it yuh
-                if(ret[ret.length - 1] == 0x3E) { // prompt character
-                    done = true;
-                    length--;
-                }
-
-                let newOut = new Uint8Array(out.length + length);
-                newOut.set(out, 0);
-                for (let i = 0; i < length; i++) {
-                    newOut[out.length + i] = ret[i];
-                }
-                // big shitcode moment but whatever
-            }
-            if(prev != -1) {
+            if (prev != -1) {
                 clearTimeout(prev);
             }
-            acc1(out);
+            acc1(this.queuedMessages.splice(0, 1)[0]);
         });
         delete this.promiseAcceptor;
         // ok at this point we should have data or we're cooked.
 
-        console.log([...readData]) // hi
+        console.log(readData) // hi
 
-        return ""
+        return readData
     }
 
     private notifications(ev: Event) {
+        this.lastReceive++;
         // @ts-ignore
         let bytesRaw: Uint8Array = ev.target.value;
-
-        // data
-        console.log("debug1: ")
-        console.log(bytesRaw)
         let decoder = new TextDecoder();
         let string = decoder.decode(bytesRaw);
-        console.log("debug: " + string)
-        // to data
-        console.log("A: " + this.promiseAcceptor)
-        console.log(this)
 
-        if(this.promiseAcceptor != null) {
-            this.promiseAcceptor(new Uint8Array(bytesRaw.buffer));
+        this.message += string;
+        if (string.endsWith(">")) {
+            this.queuedMessages.push(this.message);
+            this.message = "";
+        }
+
+        if (this.promiseAcceptor != null) {
+            this.promiseAcceptor(null);
         }
     }
 }
