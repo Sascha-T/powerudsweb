@@ -29,7 +29,7 @@ export class EigenProfile implements BluetoothProfile {
 
     async putUDS(data: string): Promise<string> {
         if (this.writeCharacteristic == null)
-            throw "Why?";
+            throw "Write characteristic is null.";
 
         let enc = new TextEncoder();
         let encoded = enc.encode(data);
@@ -41,7 +41,7 @@ export class EigenProfile implements BluetoothProfile {
         do {
             temp = array.slice(0, MTU);
             array = array.slice(MTU);
-            await this.writeCharacteristic.writeValueWithResponse(temp);
+            await this.writeCharacteristic.writeValueWithResponse(temp).catch(a => {throw ("Write failed: " + a)});
             console.log("Wrote " + [...temp])
         } while (array.length != 0)
         console.log("Write success, awaiting read...");
@@ -58,8 +58,7 @@ export class EigenProfile implements BluetoothProfile {
                         prev = setTimeout(timeoutFunc, READ_TIMEOUT);
                         return;
                     }
-                    console.log("Read timeout")
-                    rej1()
+                    rej1("Read timeout")
                 }
             }
             prev = setTimeout(timeoutFunc, READ_TIMEOUT);
