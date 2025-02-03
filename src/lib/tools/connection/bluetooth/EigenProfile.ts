@@ -1,4 +1,4 @@
-import type {BluetoothProfile} from "./Profile";
+import type { BluetoothProfile } from "./Profile";
 import by = $derived.by;
 
 const MTU = 120; // magic value, i picked it because i like it
@@ -24,7 +24,7 @@ export class EigenProfile implements BluetoothProfile {
         this.writeCharacteristic = await svc.getCharacteristic("0000fff2-0000-1000-8000-00805f9b34fb")
 
         await this.readCharacteristic.startNotifications();
-        this.readCharacteristic.addEventListener("characteristicvaluechanged", this.notifications)
+        this.readCharacteristic.addEventListener("characteristicvaluechanged", this.notifications())
     }
 
     async putUDS(data: string): Promise<string> {
@@ -41,7 +41,7 @@ export class EigenProfile implements BluetoothProfile {
         do {
             temp = array.slice(0, MTU);
             array = array.slice(MTU);
-            await this.writeCharacteristic.writeValueWithResponse(temp).catch(a => {throw ("Write failed: " + a)});
+            await this.writeCharacteristic.writeValueWithResponse(temp).catch(a => { throw ("Write failed: " + a) });
             console.log("Wrote " + [...temp])
         } while (array.length != 0)
         console.log("Write success, awaiting read...");
@@ -67,7 +67,7 @@ export class EigenProfile implements BluetoothProfile {
                 await new Promise((acc, rej) => {
                     this.promiseAcceptor = acc;
                 })
-
+            
             if (prev != -1) {
                 clearTimeout(prev);
             }
@@ -75,27 +75,44 @@ export class EigenProfile implements BluetoothProfile {
         });
         delete this.promiseAcceptor;
         // ok at this point we should have data or we're cooked.
+        let chars = readData.split("")
+        let tempText = "";
+        let outText = "";
+        for (const char of chars) {
+            if (char == "\r") {
+                if(tempText.length > 0)
+                    outText = tempText;
+                tempText = "";
+            } else {
+                tempText += char;
+            }
+        }
+        console.log(tempText)
+        console.log( outText)
 
-        console.log(readData) // hi
-
-        return readData
+        return outText
     }
 
-    private notifications(ev: Event) {
-        this.lastReceive++;
-        // @ts-ignore
-        let bytesRaw: Uint8Array = ev.target.value;
-        let decoder = new TextDecoder();
-        let string = decoder.decode(bytesRaw);
+    private notifications() {
+        return (ev: Event) => {
+            this.lastReceive++;
+            // @ts-ignore
+            let bytesRaw: Uint8Array = ev.target.value;
+            let decoder = new TextDecoder();
+            let string = decoder.decode(bytesRaw);
 
-        this.message += string;
-        if (string.endsWith(">")) {
-            this.queuedMessages.push(this.message);
-            this.message = "";
-        }
+            this.message += string;
+            if (string.endsWith(">")) {
+                console.log(this)
+                this.queuedMessages.push(this.message);
 
-        if (this.promiseAcceptor != null) {
-            this.promiseAcceptor(null);
+                this.message = "";
+
+                
+                if (this.promiseAcceptor != null) {
+                    this.promiseAcceptor(null);
+                }
+            }
         }
     }
 }
