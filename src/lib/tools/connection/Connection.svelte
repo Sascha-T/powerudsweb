@@ -15,7 +15,7 @@
         return str;
     }
     async function onclick() {
-        ConnectionManager.CURRENT_CONNECTION = await getProfile(device.device as BluetoothDevice);
+        ConnectionManager.setConnection(await getProfile(device.device as BluetoothDevice));
     }
 </script>
 <main id="connection">

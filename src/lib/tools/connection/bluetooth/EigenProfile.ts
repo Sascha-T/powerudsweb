@@ -13,10 +13,13 @@ export class EigenProfile implements BluetoothProfile {
     queuedMessages: string[] = [];
     lastReceive: number = 0;
 
+    deviceUUID: string = "";
     async init(device: BluetoothDevice) {
-        if (device.gatt == null || !device.gatt.connected) {
-            return
+        if (device.gatt == null) throw "gatt missing";
+        if(!device.gatt.connected) {
+            await device.gatt.connect();
         }
+        this.deviceUUID = device.id;
         let gatt = device.gatt;
 
         let svc = await gatt.getPrimaryService("0000fff0-0000-1000-8000-00805f9b34fb");
@@ -25,6 +28,19 @@ export class EigenProfile implements BluetoothProfile {
 
         await this.readCharacteristic.startNotifications();
         this.readCharacteristic.addEventListener("characteristicvaluechanged", this.notifications())
+    }
+    async save(): Promise<string> {
+        return `eigen:${this.deviceUUID}`;
+    }
+    async load(text: string): Promise<void> {
+        let uuid = text.replace("eigen:", "");
+        let devices = await navigator.bluetooth.getDevices();
+        for (let device of devices) {
+            if(device.id == uuid) {
+                await this.init(device);
+                return;
+            }
+        }
     }
 
     async putUDS(data: string): Promise<string> {
