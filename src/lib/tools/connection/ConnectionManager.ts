@@ -1,6 +1,8 @@
 import {EigenProfile} from "./bluetooth/EigenProfile";
 import Connection from "./Connection.svelte";
 import { state } from "./Connection.svelte";
+import {get} from "svelte/store";
+import getConnection = ConnectionManager.getConnection;
 
 export namespace ConnectionManager {
     export interface Connection {
@@ -8,6 +10,7 @@ export namespace ConnectionManager {
         getSelected(): [string, string];
 
         execute(data: string): Promise<string>
+        keepAlive(): void;
 
         save(): Promise<string>
         load(text: string): Promise<void>
@@ -40,3 +43,9 @@ export namespace ConnectionManager {
             await setConnection(await load(window.localStorage.getItem("lastConnection") as string));
     }
 }
+setInterval(() => {
+    let c;
+    if((c = getConnection()) != null) {
+        c.keepAlive();
+    }
+}, 1000)

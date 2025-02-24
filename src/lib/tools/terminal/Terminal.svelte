@@ -1,5 +1,6 @@
-<script lang="ts">
+<script module lang="ts">
     import {ConnectionManager} from "../connection/ConnectionManager";
+    import {handleText} from "./CommandHandler";
 
     interface Line {
         color?: string,
@@ -7,7 +8,7 @@
     }
 
     let inputValue = $state("line");
-    let lines: Line[] = $state([{
+    export let lines: Line[] = $state([{
         color: "yellow",
         text: ">> This is the beginning of your communication with an ECU"
     }])
@@ -20,31 +21,11 @@
     }
 
     function enter() {
-        lines.push({
-            text: "< " + inputValue
-        })
-        let copy = $state.snapshot(inputValue);
+        let command = $state.snapshot(inputValue);
         inputValue = "";
 
-
         if (ConnectionManager.getConnection() != null) {
-            try {
-                ConnectionManager.getConnection()!!.execute(copy).then((data) => {
-                    lines.push({
-                        text: "> " + data
-                    })
-                }).catch((err) => {
-                    lines.push({
-                        text: "# " + err,
-                        color: "red"
-                    })
-                })
-            } catch (e) {
-                lines.push({
-                    text: "## " + e,
-                    color: "red"
-                })
-            }
+            handleText(command);
         } else {
             lines.push({
                 text: "# No device connected",
@@ -52,6 +33,7 @@
             })
         }
     }
+
 </script>
 <main id="terminal">
     <div id="terminalContent">

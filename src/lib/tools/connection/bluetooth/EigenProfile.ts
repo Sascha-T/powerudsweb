@@ -52,6 +52,9 @@ export class EigenProfile implements BluetoothProfile {
             }
         }
     }
+    keepAlive() {
+        this.executeRaw("3E00"); // pray
+    }
     async select(txh: string, rxh: string): Promise<void> {
         this.txhRxh = [txh, rxh];
         // set headers
