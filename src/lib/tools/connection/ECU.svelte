@@ -1,5 +1,6 @@
 <script lang="ts">
     import {ConnectionManager} from "./ConnectionManager";
+    import { state as state2 } from "./Connection.svelte";
 
     const getConnection = ConnectionManager.getConnection;
 
@@ -42,13 +43,13 @@
 <main>
     Select the ECU
     <hr>
-    <select bind:value={selected} onchange={changeSelect} id="ecuSel">
+    <select disabled={!state2.connected} bind:value={selected} onchange={changeSelect} id="ecuSel">
         <option value="custom">Custom</option>
         {#each options as opt}
             <option value={opt[1]}>{opt[0]}</option>
         {/each}
     </select>
-    {#if selected === "custom"}
+    {#if selected === "custom" && state2.connected}
         <br/>
         RXh
         <input id="txh" bind:value={txh}/> <br/>
