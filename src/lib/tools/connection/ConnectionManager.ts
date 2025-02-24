@@ -1,4 +1,6 @@
 import {EigenProfile} from "./bluetooth/EigenProfile";
+import Connection from "./Connection.svelte";
+import { state } from "./Connection.svelte";
 
 export namespace ConnectionManager {
     export interface Connection {
@@ -14,6 +16,8 @@ export namespace ConnectionManager {
     let CURRENT_CONNECTION: Connection | null = null;
     export async function setConnection(c: Connection) {
         window.localStorage.setItem("lastConnection", await c.save());
+        CURRENT_CONNECTION = c;
+        state.connected = true;
     }
     export function getConnection(): Connection | null {
         return CURRENT_CONNECTION;

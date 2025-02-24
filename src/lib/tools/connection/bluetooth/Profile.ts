@@ -7,6 +7,7 @@ export interface BluetoothProfile extends ConnectionManager.Connection {
     execute(data: string): Promise<string>
 }
 
+// @todo: on disconnect
 export async function getProfile(device: BluetoothDevice): Promise<BluetoothProfile> {
     // we do not support anything but the eigenprofile at this moment, so...
     await device.gatt?.connect();
