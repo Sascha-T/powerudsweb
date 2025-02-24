@@ -2,14 +2,14 @@
     import Bluetooth from "./bluetooth/Bluetooth.svelte";
     import ECU from "./ECU.svelte";
 
-    export const state = $state({ connected: false })
+    export const state = $state({connected: false})
 </script>
 <main id="connection">
     <div class="connBox">
-        <Bluetooth  />
+        <Bluetooth/>
     </div>
     <div class="connBox">
-        <ECU  />
+        <ECU/>
     </div>
 </main>
 <style>
@@ -23,6 +23,12 @@
         justify-content: center;
         align-items: center;
         align-content: stretch;
+    }
+
+    @media only screen and (max-width: 1000px) {
+        #connection {
+            flex-direction: column !important;
+        }
     }
 
     .connBox {

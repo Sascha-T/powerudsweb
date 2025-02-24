@@ -2,8 +2,6 @@ import {EigenProfile} from "./bluetooth/EigenProfile";
 import Connection from "./Connection.svelte";
 import { state } from "./Connection.svelte";
 import {get} from "svelte/store";
-import getConnection = ConnectionManager.getConnection;
-
 export namespace ConnectionManager {
     export interface Connection {
         select(tx: string, rx: string): Promise<void>;
@@ -45,7 +43,7 @@ export namespace ConnectionManager {
 }
 setInterval(() => {
     let c;
-    if((c = getConnection()) != null) {
+    if((c = ConnectionManager.getConnection()) != null) {
         c.keepAlive();
     }
 }, 1000)

@@ -18,15 +18,29 @@
     const tool = $state({
         tool: TOOLS[0]
     });
+    let classState = $state("")
+    function sidebar() {
+        console.log("A")
+        if(classState != "")
+            classState = "";
+        else
+            classState = "collapsed";
+    }
 
-    const selectTool = (newTool: any) => () => tool.tool = newTool;
+    function selectTool(newTool: string) {
+        return function() {
+            tool.tool = newTool
+            classState = "collapsed";
+        }
+    }
 
 
 </script>
 
 <main>
+    <button id="sidebar-button" onclick={sidebar}>☰</button>
     <div id="main">
-        <div id="sidebar">
+        <div id="sidebar" class={classState}>
             <p id="sidebarHeader">PowerUDS</p>
             <hr/>
             <div id="buttons">
@@ -59,6 +73,8 @@
     }
 
     #sidebar {
+        z-index: 101;
+        left: 0;
         padding: 20px;
         background: #3c3c3c;
         box-shadow: 5px 5px 6px 0px #000000;
@@ -87,5 +103,31 @@
 
     #selection {
         flex: 1;
+    }
+
+    #sidebar-button {
+        display: none;
+        position: absolute;
+        bottom: 0;
+        left: 0;
+        z-index: 1;
+    }
+
+    @media only screen and (max-width: 1000px) {
+        #sidebar {
+            position: fixed;
+            z-index: 100;
+            height: 100vh;
+
+            transition: left 0.5s;
+        }
+
+        .collapsed {
+            left: -100% !important;
+        }
+
+        #sidebar-button {
+            display: block;
+        }
     }
 </style>

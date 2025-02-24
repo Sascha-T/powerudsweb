@@ -7,7 +7,7 @@
         text: string
     }
 
-    let inputValue = $state("line");
+    let inputValue = $state("");
     export let lines: Line[] = $state([{
         color: "yellow",
         text: ">> This is the beginning of your communication with an ECU"
@@ -79,6 +79,12 @@
         justify-content: flex-start;
         align-items: stretch;
         align-content: stretch;
+    }
+
+    @media only screen and (max-width: 1000px) {
+        #terminal {
+            flex-direction: column-reverse;
+        }
     }
 
     #terminalContent {
