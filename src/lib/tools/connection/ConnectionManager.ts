@@ -1,6 +1,16 @@
 import {EigenProfile} from "./bluetooth/EigenProfile";
 
 export namespace ConnectionManager {
+    export interface Connection {
+        select(tx: string, rx: string): Promise<void>;
+        getSelected(): [string, string];
+
+        execute(data: string): Promise<string>
+
+        save(): Promise<string>
+        load(text: string): Promise<void>
+    }
+
     let CURRENT_CONNECTION: Connection | null = null;
     export async function setConnection(c: Connection) {
         window.localStorage.setItem("lastConnection", await c.save());
@@ -10,12 +20,7 @@ export namespace ConnectionManager {
     }
     // @ts-ignore debug environment
     window.cm = ConnectionManager;
-    export interface Connection {
-        putUDS(data: string): Promise<string>
 
-        save(): Promise<string>
-        load(text: string): Promise<void>
-    }
 
     let loading: {[a: string]: () => Connection} = {
         "eigen": () => new EigenProfile()

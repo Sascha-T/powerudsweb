@@ -27,9 +27,9 @@
         inputValue = "";
 
 
-        if (ConnectionManager.CURRENT_CONNECTION != null) {
+        if (ConnectionManager.getConnection() != null) {
             try {
-                ConnectionManager.CURRENT_CONNECTION.putUDS(copy).then((data) => {
+                ConnectionManager.getConnection()!!.execute(copy).then((data) => {
                     lines.push({
                         text: "> " + data
                     })

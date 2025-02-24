@@ -3,7 +3,8 @@ import {ConnectionManager} from "../ConnectionManager";
 
 export interface BluetoothProfile extends ConnectionManager.Connection {
     init(device: BluetoothDevice): Promise<void>;
-    putUDS(data: string): Promise<string>
+
+    execute(data: string): Promise<string>
 }
 
 export async function getProfile(device: BluetoothDevice): Promise<BluetoothProfile> {

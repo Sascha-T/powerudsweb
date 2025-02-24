@@ -4,7 +4,11 @@ import by = $derived.by;
 const MTU = 120; // magic value, i picked it because i like it
 const READ_TIMEOUT = 5000;
 
+
+// thanks to devereux and diagostique
+const initCommands = ["ATZ", "ATWS", "ATD", "ATE0", "ATL0", "ATH0", "ATS0", "ATAL", "ATV0", "ATSP6"];
 export class EigenProfile implements BluetoothProfile {
+
     readCharacteristic?: BluetoothRemoteGATTCharacteristic
     writeCharacteristic?: BluetoothRemoteGATTCharacteristic
 
@@ -14,6 +18,8 @@ export class EigenProfile implements BluetoothProfile {
     lastReceive: number = 0;
 
     deviceUUID: string = "";
+    txhRxh: [string, string] = ["752", "652"];
+
     async init(device: BluetoothDevice) {
         if (device.gatt == null) throw "gatt missing";
         if(!device.gatt.connected) {
@@ -28,22 +34,43 @@ export class EigenProfile implements BluetoothProfile {
 
         await this.readCharacteristic.startNotifications();
         this.readCharacteristic.addEventListener("characteristicvaluechanged", this.notifications())
+
+        for (let initCommand of initCommands) await this.executeRaw(initCommand);
+        await this.select(this.txhRxh[0], this.txhRxh[1]);
     }
     async save(): Promise<string> {
-        return `eigen:${this.deviceUUID}`;
+        return `eigen:${this.deviceUUID}:${this.txhRxh[0]}:${this.txhRxh[1]}`;
     }
     async load(text: string): Promise<void> {
-        let uuid = text.replace("eigen:", "");
+        let data = text.split(":");
         let devices = await navigator.bluetooth.getDevices();
         for (let device of devices) {
-            if(device.id == uuid) {
+            if(device.id == data[1]) {
                 await this.init(device);
+                await this.select(data[2], data[3]);
                 return;
             }
         }
     }
+    async select(txh: string, rxh: string): Promise<void> {
+        this.txhRxh = [txh, rxh];
+        // set headers
+        await this.executeRaw("ATSH" + txh);
+        await this.executeRaw("ATCRA" + rxh);
+        await this.executeRaw("ATFCSH" + txh);
+        await this.executeRaw("ATFCSD300000");
+        await this.executeRaw("ATFCSM1");
+    }
+    getSelected(): [string, string] {
+        return this.txhRxh;
+    }
+    async execute(data: string): Promise<string> {
+        if(data.replace(/^[abcdefABCDEF0123456789\x20]*$/g, "").length != 0) // @todo: allow raw control somehow (?)
+            return "Validation failed.";
+        return await this.executeRaw(data);
+    }
 
-    async putUDS(data: string): Promise<string> {
+    async executeRaw(data: string): Promise<string> {
         if (this.writeCharacteristic == null)
             throw "Write characteristic is null.";
 
