@@ -68,8 +68,8 @@ export class EigenProfile implements BluetoothProfile {
         return this.txhRxh;
     }
     async execute(data: string): Promise<string> {
-        if(data.replace(/^[abcdefABCDEF0123456789\x20]*$/g, "").length != 0) // @todo: allow raw control somehow (?)
-            return "Validation failed.";
+        /*if(data.replace(/^[abcdefABCDEF0123456789\x20]*$/g, "").length != 0) // @todo: allow raw control somehow (?)
+            return "Validation failed.";*/
         return await this.executeRaw(data);
     }
 
